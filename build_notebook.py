@@ -98,9 +98,10 @@ import os
 if not os.path.exists("Wav2Lip"):
     !git clone -q https://github.com/Rudrabha/Wav2Lip
 
-# 2) Librerias con versiones COMPATIBLES entre si (clave para que no truene numpy)
-!pip install -q "pyannote.audio>=3.3,<3.4"
-!pip install -q "librosa==0.10.2.post1" gdown ffmpeg-python tqdm
+# 2) Librerias con versiones COMPATIBLES entre si (clave para que no truene)
+#    Fijamos torch/torchaudio a una versión estable que el separador de voces entiende.
+!pip install -q torch==2.4.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121
+!pip install -q "pyannote.audio==3.3.2" "librosa==0.10.2.post1" gdown ffmpeg-python tqdm
 # numpy y pandas FIJOS al final, para que manden ellos y no haya choque de versiones
 !pip install -q "numpy==2.0.2" "pandas==2.2.2"
 
@@ -125,11 +126,18 @@ if not os.path.exists(".instalado_ok"):
 
 # 5) Segunda corrida: comprobamos que todo cargue bien
 try:
-    import numpy, librosa
+    import numpy, librosa, torchaudio
+    # Parche por si la versión de torchaudio movió de lugar 'AudioMetaData'
+    if not hasattr(torchaudio, "AudioMetaData"):
+        try:
+            from torchaudio.backend.common import AudioMetaData as _AMD
+            torchaudio.AudioMetaData = _AMD
+        except Exception:
+            pass
     from pyannote.audio import Pipeline
     ok = (os.path.getsize("Wav2Lip/checkpoints/wav2lip_gan.pth") > 1_000_000 and
           os.path.getsize("Wav2Lip/face_detection/detection/sfd/s3fd.pth") > 1_000_000)
-    print("numpy:", numpy.__version__, "| librosa:", librosa.__version__)
+    print("numpy:", numpy.__version__, "| librosa:", librosa.__version__, "| torchaudio:", torchaudio.__version__)
     print("✅ Todo listo: motor, modelos y separador de voces. Sigue a la celda 3." if ok
           else "⚠️ Algún modelo no descargó bien; vuelve a correr ESTA celda.")
 except Exception as e:
@@ -199,8 +207,15 @@ Aquí el programa escucha el audio y arma la lista de turnos:
 """))
 cells.append(code(
 """
+import torch, os, torchaudio
+# Parche por si la versión de torchaudio movió de lugar 'AudioMetaData'
+if not hasattr(torchaudio, "AudioMetaData"):
+    try:
+        from torchaudio.backend.common import AudioMetaData as _AMD
+        torchaudio.AudioMetaData = _AMD
+    except Exception:
+        pass
 from pyannote.audio import Pipeline
-import torch, os
 
 # Convertimos el audio a un formato simple (mono, 16k) para analizarlo
 WAV16 = "audio_16k.wav"

@@ -88,10 +88,12 @@ import os
 if not os.path.exists("Wav2Lip"):
     !git clone -q https://github.com/Rudrabha/Wav2Lip
 
-# 2) Librerias de Python con versiones probadas (evita errores de compatibilidad)
-!pip install -q librosa==0.9.2 numba==0.58.1 numpy==1.23.5 opencv-python-headless==4.9.0.80
-!pip install -q ffmpeg-python tqdm gdown
-!pip install -q "pyannote.audio==3.1.1"
+# 2) Librerias (versiones que conviven bien y NO rompen el numpy de Colab)
+!pip install -q "librosa==0.10.2.post1" "numba>=0.59" gdown ffmpeg-python tqdm
+!pip install -q "pyannote.audio>=3.3,<3.4"
+
+# 2b) Arreglar Wav2Lip para la versión nueva de librosa (cambió el formato de una función)
+!sed -i 's/librosa.filters.mel(hp.sample_rate, hp.n_fft/librosa.filters.mel(sr=hp.sample_rate, n_fft=hp.n_fft/' Wav2Lip/audio.py
 
 # 3) Descargar los modelos (pesos) de Wav2Lip
 os.makedirs("Wav2Lip/checkpoints", exist_ok=True)
@@ -105,10 +107,18 @@ if not os.path.exists("Wav2Lip/checkpoints/wav2lip_gan.pth"):
 if not os.path.exists("Wav2Lip/face_detection/detection/sfd/s3fd.pth"):
     !wget -q -O Wav2Lip/face_detection/detection/sfd/s3fd.pth "https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth"
 
-# Comprobacion
-ok = (os.path.getsize("Wav2Lip/checkpoints/wav2lip_gan.pth") > 1_000_000 and
-      os.path.getsize("Wav2Lip/face_detection/detection/sfd/s3fd.pth") > 1_000_000)
-print("✅ Motor y modelos listos." if ok else "⚠️ Algun modelo no se descargo bien. Vuelve a correr esta celda.")
+# Comprobación rápida (versiones + modelos + que pyannote importe sin romper numpy)
+try:
+    import numpy, librosa
+    from pyannote.audio import Pipeline
+    ok = (os.path.getsize("Wav2Lip/checkpoints/wav2lip_gan.pth") > 1_000_000 and
+          os.path.getsize("Wav2Lip/face_detection/detection/sfd/s3fd.pth") > 1_000_000)
+    print("numpy:", numpy.__version__, "| librosa:", librosa.__version__)
+    print("✅ Todo listo: motor, modelos y separador de voces." if ok
+          else "⚠️ Algún modelo no descargó bien; vuelve a correr ESTA celda.")
+except Exception as e:
+    print("⚠️ Hubo un problema al importar:", e)
+    print("👉 Solución: menú 'Entorno de ejecución' → 'Reiniciar sesión', y vuelve a correr ESTA celda.")
 """))
 
 # ---------------------------------------------------------------- 3 token

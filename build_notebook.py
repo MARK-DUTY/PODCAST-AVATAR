@@ -78,7 +78,17 @@ cells.append(md(
 """## 2️⃣ Instalar el motor (Wav2Lip) y los modelos
 
 Esto descarga el programa que mueve la boca y sus "cerebros" (modelos).
-**Tarda unos 3 a 5 minutos.** Solo se hace una vez por sesión.
+**Tarda unos 3 a 5 minutos.**
+
+> ⚠️ **MUY IMPORTANTE — esta celda se ejecuta DOS veces:**
+> 1. Le das ▶️ la **primera vez**. Al terminar, **la sesión se reinicia sola**
+>    (es NORMAL, no es un error; verás un aviso de que el entorno se reinició).
+> 2. Cuando termine de reiniciar, **vuelve a darle ▶️ a ESTA MISMA celda 2**.
+>    En esta segunda vez (más rápida) saldrá el mensaje **✅ Todo listo**.
+>
+> 💡 Es normal que aparezca **texto en rojo** con palabras como *"warning"* o
+> *"incompatible"*. Eso **NO es error**, puedes ignorarlo. Lo único que importa
+> es ver al final el mensaje **✅ Todo listo**.
 """))
 cells.append(code(
 """
@@ -88,9 +98,11 @@ import os
 if not os.path.exists("Wav2Lip"):
     !git clone -q https://github.com/Rudrabha/Wav2Lip
 
-# 2) Librerias (versiones que conviven bien y NO rompen el numpy de Colab)
-!pip install -q "librosa==0.10.2.post1" "numba>=0.59" gdown ffmpeg-python tqdm
+# 2) Librerias con versiones COMPATIBLES entre si (clave para que no truene numpy)
 !pip install -q "pyannote.audio>=3.3,<3.4"
+!pip install -q "librosa==0.10.2.post1" gdown ffmpeg-python tqdm
+# numpy y pandas FIJOS al final, para que manden ellos y no haya choque de versiones
+!pip install -q "numpy==2.0.2" "pandas==2.2.2"
 
 # 2b) Arreglar Wav2Lip para la versión nueva de librosa (cambió el formato de una función)
 !sed -i 's/librosa.filters.mel(hp.sample_rate, hp.n_fft/librosa.filters.mel(sr=hp.sample_rate, n_fft=hp.n_fft/' Wav2Lip/audio.py
@@ -98,27 +110,31 @@ if not os.path.exists("Wav2Lip"):
 # 3) Descargar los modelos (pesos) de Wav2Lip
 os.makedirs("Wav2Lip/checkpoints", exist_ok=True)
 os.makedirs("Wav2Lip/face_detection/detection/sfd", exist_ok=True)
-
-# Modelo principal de Wav2Lip (mueve la boca)
 if not os.path.exists("Wav2Lip/checkpoints/wav2lip_gan.pth"):
     !wget -q -O Wav2Lip/checkpoints/wav2lip_gan.pth "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
-
-# Modelo que detecta la cara dentro de la foto (s3fd)
 if not os.path.exists("Wav2Lip/face_detection/detection/sfd/s3fd.pth"):
     !wget -q -O Wav2Lip/face_detection/detection/sfd/s3fd.pth "https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth"
 
-# Comprobación rápida (versiones + modelos + que pyannote importe sin romper numpy)
+# 4) Reiniciar UNA sola vez para que las versiones nuevas carguen limpias.
+#    (Es normal: la sesión se reinicia sola. Después vuelve a darle ▶️ a ESTA celda.)
+if not os.path.exists(".instalado_ok"):
+    open(".instalado_ok", "w").close()
+    print("🔄 Ya quedó lo pesado. Voy a REINICIAR la sesión (es normal, NO es un error).")
+    print("   Cuando se reinicie, vuelve a darle ▶️ a ESTA MISMA celda 2 una segunda vez.")
+    os.kill(os.getpid(), 9)
+
+# 5) Segunda corrida: comprobamos que todo cargue bien
 try:
     import numpy, librosa
     from pyannote.audio import Pipeline
     ok = (os.path.getsize("Wav2Lip/checkpoints/wav2lip_gan.pth") > 1_000_000 and
           os.path.getsize("Wav2Lip/face_detection/detection/sfd/s3fd.pth") > 1_000_000)
     print("numpy:", numpy.__version__, "| librosa:", librosa.__version__)
-    print("✅ Todo listo: motor, modelos y separador de voces." if ok
+    print("✅ Todo listo: motor, modelos y separador de voces. Sigue a la celda 3." if ok
           else "⚠️ Algún modelo no descargó bien; vuelve a correr ESTA celda.")
 except Exception as e:
-    print("⚠️ Hubo un problema al importar:", e)
-    print("👉 Solución: menú 'Entorno de ejecución' → 'Reiniciar sesión', y vuelve a correr ESTA celda.")
+    print("⚠️ Aún hay un problema al importar:", e)
+    print("👉 Entorno de ejecución → Reiniciar sesión, y vuelve a correr ESTA celda.")
 """))
 
 # ---------------------------------------------------------------- 3 token

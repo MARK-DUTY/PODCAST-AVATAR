@@ -103,7 +103,7 @@ if not os.path.exists("Wav2Lip"):
 !pip install -q torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121
 !pip install -q "pyannote.audio==3.3.2" "librosa==0.10.2.post1" gdown ffmpeg-python tqdm
 # numpy y pandas FIJOS al final, para que manden ellos y no haya choque de versiones
-!pip install -q "numpy==2.0.2" "pandas==2.2.2" "huggingface_hub==0.25.2"
+!pip install -q "numpy==2.0.2" "pandas==2.2.2" "huggingface_hub==0.25.2" "transformers==4.44.2"
 
 # 2b) Arreglar Wav2Lip para la versión nueva de librosa (cambió el formato de una función)
 !sed -i 's/librosa.filters.mel(hp.sample_rate, hp.n_fft/librosa.filters.mel(sr=hp.sample_rate, n_fft=hp.n_fft/' Wav2Lip/audio.py
@@ -118,8 +118,8 @@ if not os.path.exists("Wav2Lip/face_detection/detection/sfd/s3fd.pth"):
 
 # 4) Reiniciar UNA sola vez para que las versiones nuevas carguen limpias.
 #    (Es normal: la sesión se reinicia sola. Después vuelve a darle ▶️ a ESTA celda.)
-if not os.path.exists(".instalado_ok2"):
-    open(".instalado_ok2", "w").close()
+if not os.path.exists(".instalado_ok3"):
+    open(".instalado_ok3", "w").close()
     print("🔄 Ya quedó lo pesado. Voy a REINICIAR la sesión (es normal, NO es un error).")
     print("   Cuando se reinicie, vuelve a darle ▶️ a ESTA MISMA celda 2 una segunda vez.")
     os.kill(os.getpid(), 9)

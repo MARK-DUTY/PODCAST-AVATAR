@@ -176,8 +176,12 @@ Te va a pedir **3 archivos, uno por uno**:
 2. La foto del **primer** hablante (la persona que habla **primero** en el audio).
 3. La foto del **segundo** hablante.
 
-> 📸 **Para que se vea bien:** fotos de frente, cara bien iluminada y despejada
-> (sin lentes oscuros), boca cerrada o relajada, buena resolución.
+> 📸 **Para que se vea bien (MUY importante para la boca):**
+> - Fotos de **frente**, cara bien iluminada y despejada (sin lentes oscuros).
+> - **Boca CERRADA o relajada, SIN sonreír enseñando los dientes.** ⚠️ Si la
+>   persona sale con una sonrisa de dientes, los labios se mueven pero la sonrisa
+>   se queda fija atrás y se ve raro. Mejor expresión neutral / seria, boca cerrada.
+> - Buena resolución y que la cara ocupe buena parte de la foto.
 """))
 cells.append(code(
 """

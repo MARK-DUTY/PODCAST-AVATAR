@@ -202,6 +202,42 @@ print("   Foto 1:", IMG_SPEAKER_1)
 print("   Foto 2:", IMG_SPEAKER_2)
 """))
 
+# ---------------------------------------------------------------- 4.5 modo prueba
+cells.append(md(
+"""## 4️⃣.5 ¿Prueba rápida o video completo?
+
+Antes de procesar TODO el podcast (que puede tardar **más de 1 hora**), conviene
+hacer una **prueba corta de 1 minuto** para revisar que la boca y el movimiento
+se vean bien. Así no esperas horas para darte cuenta de algo.
+
+- Deja **`MODO_PRUEBA = True`** para procesar **solo el primer minuto** (rápido).
+- Cuando ya te guste cómo quedó, cámbialo a **`MODO_PRUEBA = False`** y vuelve a
+  correr **desde esta celda hacia abajo** para hacer el **video completo**.
+"""))
+cells.append(code(
+"""
+import os
+
+MODO_PRUEBA     = True   # True = muestra corta (rapido) | False = podcast COMPLETO
+SEGUNDOS_PRUEBA = 60     # cuantos segundos usar en la prueba (60 = 1 minuto)
+
+# Guardamos el audio original UNA sola vez, para no perderlo si repetimos la celda.
+try:
+    AUDIO_ORIGINAL
+except NameError:
+    AUDIO_ORIGINAL = AUDIO_PATH
+
+if MODO_PRUEBA:
+    AUDIO_PATH = "audio_prueba.wav"
+    os.system(f'ffmpeg -y -i "{AUDIO_ORIGINAL}" -t {SEGUNDOS_PRUEBA} '
+              f'-ac 2 -ar 44100 "{AUDIO_PATH}" -loglevel error')
+    print(f"🧪 MODO PRUEBA: usaré solo los primeros {SEGUNDOS_PRUEBA} segundos.")
+    print("   Cuando te guste, pon MODO_PRUEBA = False y corre otra vez DESDE AQUÍ.")
+else:
+    AUDIO_PATH = AUDIO_ORIGINAL
+    print("🎬 MODO COMPLETO: usaré TODO el audio del podcast.")
+"""))
+
 # ---------------------------------------------------------------- 5 diarizar
 cells.append(md(
 """## 5️⃣ Separar las voces (¿quién habla y cuándo?)
@@ -305,10 +341,16 @@ print(f"\\n✅ Listos {len(clip_files)} clips animados.")
 
 # ---------------------------------------------------------------- 7 unir
 cells.append(md(
-"""## 7️⃣ Unir todo en el video final
+"""## 7️⃣ Unir todo en el video final (con movimiento suave)
 
-Igualamos el tamaño de todos los pedazos y los pegamos en orden.
+Igualamos el tamaño de todos los pedazos, les damos un **movimiento suave**
+(efecto "respiración": la imagen se acerca y aleja muy poquito, como cuando una
+persona respira) y los pegamos en orden.
 
+> 💃 El movimiento es **sutil a propósito** para que se vea vivo pero natural.
+> Si lo quieres **totalmente quieto**, cambia abajo `MOVIMIENTO = True` por
+> `MOVIMIENTO = False`.
+>
 > 📐 Por defecto sale **vertical** (para Reels/TikTok/Shorts). Si lo quieres
 > **horizontal** (YouTube), cambia abajo `W, H = 720, 1280` por `W, H = 1280, 720`.
 """))
@@ -316,6 +358,7 @@ cells.append(code(
 """
 import os
 W, H = 720, 1280   # vertical. Para horizontal usa: W, H = 1280, 720
+MOVIMIENTO = True  # True = movimiento suave (respiracion) | False = imagen quieta
 
 os.makedirs("norm", exist_ok=True)
 norm_files = []
@@ -332,8 +375,18 @@ with open("lista.txt", "w") as f:
     for n in norm_files:
         f.write(f"file '{n}'\\n")
 
-os.system('ffmpeg -y -f concat -safe 0 -i lista.txt -c:v libx264 '
-          '-pix_fmt yuv420p -c:a aac "podcast_final.mp4" -loglevel error')
+# Movimiento suave tipo "respiracion": un zoom que sube y baja muy poquito.
+# (Las expresiones no llevan comas, por eso basta con comillas simples para la shell.)
+if MOVIMIENTO:
+    mov = ("-vf 'zoompan="
+           "z=1.04+0.03*sin(on/90):d=1:"
+           "x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):"
+           f"s={W}x{H}:fps=25' ")
+else:
+    mov = ""
+
+os.system(f'ffmpeg -y -f concat -safe 0 -i lista.txt {mov}-c:v libx264 '
+          f'-pix_fmt yuv420p -c:a aac "podcast_final.mp4" -loglevel error')
 
 if os.path.exists("podcast_final.mp4"):
     print("🎉 ¡VIDEO FINAL listo!: podcast_final.mp4")
